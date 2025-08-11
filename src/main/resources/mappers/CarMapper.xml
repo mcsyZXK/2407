@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zxk.mapper.CarMapper">
+
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="chenum">
+        insert into che (che_num , xin_xi, is_zl, price,picture_url)
+        values (#{cheNum}, #{xinXi}, #{isZl}, #{price},#{pictureUrl})
+    </insert>
+
+    <select id="findByXinxi" resultType="com.zxk.entity.Car">
+        select
+            che_num,xin_xi,is_zl,price,picture_url
+        from
+            che
+        where
+            xin_xi=#{xinXi}
+    </select>
+    <select id="findByCheNum" resultType="com.zxk.entity.Car">
+        select
+            che_num ,xin_xi,is_zl,price,picture_url
+        from
+            che
+        where
+            che_num=#{cheNum}
+    </select>
+    <select id="findAll" resultType="com.zxk.entity.Car">
+        select
+            che_num,xin_xi,is_zl,price,picture_url
+        from
+            che
+    </select>
+    <select id="findAllnzl" resultType="com.zxk.entity.Car">
+        select
+            che_num,xin_xi,is_zl,price,picture_url
+        from
+            che
+        where
+            is_zl=0
+    </select>
+</mapper>
+

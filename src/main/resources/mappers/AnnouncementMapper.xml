@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zxk.mapper.AnnouncementMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into announcements ( id, title, message, updated_at)
+        values (#{id}, #{title}, #{message}, #{updatedAt})
+    </insert>
+
+    <select id="getAll" resultType="com.zxk.entity.Announcement">
+        select
+            id, title, message, updated_at
+        from
+            announcements
+    </select>
+</mapper>

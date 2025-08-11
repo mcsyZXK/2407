@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>登录/注册</title>
+	<script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+	<script src="js/axios/axios.js"></script>
+<link rel="stylesheet" href="style4.css">
+
+</head>
+<body>
+<div class="container right-panel-active">
+	<!-- Sign Up -->
+	<div class="container__form container--signup">
+		<form action="/reg.do" method="post" class="form" id="form1">
+			<h2 class="form__title">注册</h2>
+			<input type="text" placeholder="用户名" class="input" />
+			<input type="email" placeholder="邮箱" class="input" />
+			<input type="password" placeholder="密码" class="input" />
+			<button class="btn">注册</button>
+		</form>
+	</div>
+
+	<!-- Sign In -->
+	<div class="container__form container--signin">
+		<form action="/login.do" method="post" class="form" id="form2">
+			<h2 class="form__title">登录</h2>
+			<input type="email" placeholder="邮箱：" class="input" id="loginEmail" />
+			<input type="password" placeholder="密码：" class="input" id="loginPassword" />
+			<a href="#" class="link">忘记密码？</a>
+			<button class="btn">登录</button>
+		</form>
+	</div>
+
+	<div class="container__overlay">
+		<div class="overlay">
+			<div class="overlay__panel overlay--left">
+				<button class="btn" id="signIn">登录</button>
+			</div>
+			<div class="overlay__panel overlay--right">
+				<button class="btn" id="signUp">注册</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	const signInBtn = document.getElementById("signIn");
+	const signUpBtn = document.getElementById("signUp");
+	const container = document.querySelector(".container");
+	const link = document.querySelector('.link');
+	link.addEventListener('click', function(event) {
+		event.preventDefault();  // 阻止默认的链接跳转行为
+		alert('15906869493，打这个电话，现在打');
+	});
+	signInBtn.addEventListener("click", () => {
+		container.classList.remove("right-panel-active");
+	});
+	signUpBtn.addEventListener("click", () => {
+		container.classList.add("right-panel-active");
+	});
+	document.querySelector('.container--signin .btn').addEventListener('click', function(event) {
+		event.preventDefault();
+		const email = document.getElementById('loginEmail').value;
+		const password = document.getElementById('loginPassword').value;
+
+		const loginData = {
+			email: email,
+			password: password
+		};
+		axios.post('/springmvcdemo/login.do', loginData)
+				.then(function(response) {
+					console.log(response);
+					if (response.data.state === 1) {
+						// 登录成功，跳转到index.html
+						window.location.href = 'index.html';
+					}else if(response.data.state === 2){
+						window.location.href = 'admin.html';
+					} else {
+						// 显示错误消息
+						alert(response.data.message);
+					}
+				})
+				.catch(function(error) {
+					console.error(error);
+					alert('登录失败，请稍后再试');
+				});
+	});
+	document.querySelector('.container--signup .btn').addEventListener('click', function(event) {
+		event.preventDefault(); // Prevent the default form submission
+		const username = document.querySelector('.container--signup input[type="text"]').value;
+		const email = document.querySelector('.container--signup input[type="email"]').value;
+		const password = document.querySelector('.container--signup input[type="password"]').value;
+		const userData = {
+			username: username,
+			email: email,
+			password: password
+		};
+		axios.post('/springmvcdemo/reg.do', userData)
+				.then(function(response) {
+					// Handle the response if needed
+					console.log(response);
+					alert(response.data.message)
+				})
+				.catch(function(error) {
+					// Handle any errors
+					console.error(error);
+					alert(error.message)
+				});
+	});
+</script>
+</body>
+</html>

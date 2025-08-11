@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我就爱挣点业主的小钱</title>
+    <link rel="stylesheet" href="./style2.css">
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <h1>主页</h1>
+        <div class="user-info" @click="handleUserClick">
+            <img :src="user.pictureUrl || './imgs/ikun.png'" alt="用户头像">
+            <span>{{ user.username || '请登录' }}</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <a href="#" @click="currentView = 'welcome'">欢迎</a>
+            <a href="#" @click="currentView = 'cars'">车辆信息</a>
+            <a href="#" @click="currentView = 'profile'">个人信息</a>
+            <a href="#" @click="currentView = 'announcements'">公告栏目</a>
+            <a href="#" v-if="user.loggedIn" @click="currentView = 'rentals'">租赁订单</a>
+            <a href="#" v-if="user.loggedIn" @click="currentView = 'showCart'">购物车</a>
+        </div>
+        <div class="content">
+            <div v-if="currentView === 'welcome'" class="welcome">
+                <h1 class="welcome-title">业主从四面八方来~~~</h1>
+                <p class="welcome-message">这么多年一直是这样的，仔细想想是不是自己的问题</p>
+                <img src="./imgs/666.jpg" alt="Welcome Image" class="welcome-image" />
+            </div>
+            <div v-if="currentView === 'announcements'" class="announcement">
+                <h2>公告栏</h2>
+                <ul>
+                    <li v-for="announcement in announcements" :key="announcement.id">
+                        <h3>{{ announcement.title }}</h3>
+                        <p>{{ announcement.message }}</p>
+                        <textarea :id="'messagelyb-' + announcement.id" v-model="retext[announcement.id]" placeholder="请输入留言内容"></textarea>
+                        <button :id="'lybbutton-' + announcement.id" @click="sendmes(announcement)">发送</button>
+                        <small>{{ new Date(announcement.updatedat).toLocaleString() }}</small>
+                        <ul>
+                            <li v-for="reply in replies.filter(r => r.anid === announcement.id)" :key="reply.id">
+                                <p>{{ reply.username }}: {{ reply.retext }}</p>
+                                <small>{{ new Date(reply.timestamp).toLocaleString() }}</small>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div v-if="currentView === 'cars'">
+                <h2>车辆信息</h2>
+                <table class="car-table">
+                    <thead>
+                    <tr>
+                        <th>车型</th>
+                        <th>价格</th>
+                        <th>预览图</th>
+                        <th>点这儿↓</th>
+                        <th>购物车</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="car in cars" :key="car.cheNum">
+                        <td>{{ car.xinXi }}</td>
+                        <td>{{ car.price }}元/天</td>
+                        <td><img :src="car.pictureUrl" alt="预览图" style="width: 200px; height: auto;"></td>
+                        <td><button class="rent-button" @click="showConfirmDialog(car)">租赁</button></td>
+                        <td><button class="join-gwc" @click="joingwc(car)">加入购物车</button></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <button class="select-gwc" @click="checkoutCart">查看购物车</button>
+            </div>
+            <!-- 购物车视图 -->
+            <div v-if="currentView === 'showCart'">
+                <h3>购物车内容</h3>
+                <table class="cart-table">
+                    <thead>
+                    <tr>
+                        <th>车型</th>
+                        <th>价格</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="car1 in selectedCar" :key="car1.chenum">
+                        <td>{{ car1.xinxi }}</td>
+                        <td>{{ car1.price }}元/天</td>
+                        <td><button @click="removefromCart(car1)">删除</button></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <button class="checkout-button" @click="checkoutCart">结算购物车</button>
+            </div>
+            <div v-if="currentView === 'profile'">
+                <h2>个人信息</h2>
+                <p>用户名:你好， {{ user.username }}</p>
+                <p>邮箱: {{ user.email }}</p>
+                <button @click="logout">退出登录</button>
+                <!-- 添加更多个人信息和更改信息的表单 -->
+            </div>
+            <div v-if="currentView === 'rentals'">
+                <h2>本人租赁订单</h2>
+                <table class="car-table">
+                    <thead>
+                    <tr>
+                        <th>车辆编号</th>
+                        <th>价格</th>
+                        <th>开始时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="rental in rentals" :key="rental.id">
+                        <td>{{ rental.cheNum }}</td>
+                        <td>{{ rental.price }} 元/天</td>
+                        <td>{{ new Date(rental.starttime).toLocaleString() }}</td>
+                        <td><button class="settle-button" @click="settleRental(rental)">结算</button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div v-if="showSettleDialog" class="modal">
+                <div class="modal-content">
+                    <span class="close" @click="closeSettleDialog">&times;</span>
+                    <p>总金额: {{ totalAmount }} 元</p>
+                    <img src="./imgs/code.jpg" alt="二维码" style="width: 200px; height: auto;">
+                    <button @click="closeSettleDialog">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 引入 Vue.js 和 Axios -->
+<script src="./js/vue/vue.js"></script>
+<script src="./js/axios/axios.js"></script>
+<script>
+
+    new Vue({
+        el: '#app',
+        data: {
+            user: {
+                pictureUrl: './imgs/ikun.png',
+                username: '请登录',
+                email: '',
+                loggedIn: false,
+                phoneNumber:''
+            },
+            cars: [],
+            announcements: [],
+            replies: [],
+            rentals: [],
+            selectedCar:[],
+            showDialog: false,
+            currentView: 'welcome',
+            totalAmount: 0,
+            showSettleDialog:false,
+            retext: {}
+        },
+        mounted() {
+            this.fetchUserInfo();
+            this.fetchCarInfo();
+            this.fetchRentals();
+            this.fetchAnnouncements();
+            this.fetchReplies();
+        },
+        methods: {
+            fetchUserInfo() {
+                axios.get('/springmvcdemo/user.do')
+                    .then(response => {
+                        const user = response.data;
+                        if (user && user.username) {
+                            this.user = user;
+                            this.user.loggedIn = true;
+                        } else {
+                            this.user.loggedIn = false;
+                        }
+                    })
+                    .catch(error => {
+                        if (error.response && error.response.status === 302) {
+                            // 处理重定向到登录页面的情况
+                            window.location.href = 'regin.html';
+                        } else {
+                            console.error('Error fetching user info:', error);
+                        }
+                    });
+            },
+            fetchCarInfo() {
+                axios.get('/springmvcdemo/cars.do')
+                    .then(response => {
+                        this.cars = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching car info:', error);
+                    });
+            },
+            fetchAnnouncements() {
+                axios.get('/springmvcdemo/announcements.do')
+                    .then(response => {
+                        this.announcements = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching announcements:', error);
+                    });
+            },
+            fetchReplies(){
+                axios.get('/springmvcdemo/reply.do')
+                    .then(response =>{
+                            this.replies = response.data;
+                        })
+                    .catch(error =>{
+                        console.error('Error fetching replies',error);
+                    });
+            },
+            fetchRentals() {
+                axios.get('/springmvcdemo/rentalus.do')
+                    .then(response => {
+                        this.rentals = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching rentals:', error);
+                    });
+            },
+            handleUserClick() {
+                if (!this.user.loggedIn) {
+                    window.location.href = 'regin.html';
+                } else {
+                    this.currentView = 'profile';
+                }
+            },
+            showConfirmDialog(car) {
+                if (!this.user.loggedIn) {
+                    window.location.href = 'regin.html';
+                }else {this.selectedCar = car;
+                    this.showDialog = true;}
+            },
+            joingwc(car) {
+                if (!this.user.loggedIn) {
+                    window.location.href = 'regin.html';
+                } else {
+                    const existingCar = this.selectedCar.find(item => item.chenum === car.chenum);
+                    if (!existingCar) {
+                        this.selectedCar.push(car);
+                        window.alert("添加成功");
+                    } else {
+                        window.alert("该车辆已存在");
+                    }
+                }
+            },
+            removefromCart(car1){
+                this.selectedCar = this.selectedCar.filter(car => car.chenum !== car1.chenum);
+            },
+            checkoutCart(){
+                this.confirmRental();
+                this.currentView="rentals";
+            },
+            confirmRental() {
+                if (this.selectedCar.length === 0) return;
+                const rentalDataList = this.selectedCar.map(car => ({
+                    email: this.user.email,
+                    chenum: car.chenum,
+                    starttime: new Date().toISOString()
+                }));
+                axios.post('/springmvcdemo/rental.do', rentalDataList)
+                    .then(response => {
+                        alert('租赁成功');
+                        this.fetchRentals(); // 重新获取租赁订单
+                    })
+                    .catch(error => {
+                        console.error('Error renting cars:', error);
+                        alert('租赁失败，请稍后再试');
+                    });
+            },
+            settleRental(rental) {
+                const startTime = new Date(rental.starttime);
+                const currentTime = new Date();
+                const diffTime = Math.abs(currentTime - startTime);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                this.totalAmount = diffDays * rental.price;
+                this.showSettleDialog = true;
+            },
+            closeSettleDialog() {
+                this.showSettleDialog = false;
+                this.totalAmount = 0;
+            },
+            logout() {
+                axios.post('/springmvcdemo/logout.do')
+                    .then(() => {
+                        window.location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error logging out:', error);
+                    });
+            },
+            sendmes(announcement){
+                const replyData = {
+                    username: this.user.username,
+                    anid: announcement.id,
+                    timestamp: new Date().toISOString(),
+                    retext: this.retext[announcement.id]
+                };
+                if (!this.user.loggedIn) {
+                    window.location.href = 'regin.html';
+                }else {
+                    axios.post('/springmvcdemo/ireply.do',replyData)
+                        .then(response => {
+                            alert("发送成功");
+                            window.location.reload();
+                        })
+                        .catch(error => {
+                            console.error('errply',error);
+                        });
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

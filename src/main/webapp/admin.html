@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员页面</title>
+  <link rel="stylesheet" href="./style3.css">
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>管理员页面</h1>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <a href="#" @click="currentView = 'cars'">车辆管理</a>
+      <a href="#" @click="currentView = 'rentals'">租赁订单管理</a>
+    </div>
+    <div class="content">
+      <div v-if="currentView === 'cars'">
+        <h2>车辆管理</h2>
+        <form @submit.prevent="addCar">
+          <div>
+            <label for="carModel">车型:</label>
+            <input type="text" id="carModel" v-model="newCar.model" required>
+          </div>
+          <div>
+            <label for="carPrice">价格:</label>
+            <input type="number" id="carPrice" v-model="newCar.price" required>
+          </div>
+          <button type="submit">添加车辆</button>
+        </form>
+        <table class="car-table">
+          <thead>
+          <tr>
+            <th>车型</th>
+            <th>价格</th>
+            <th>预览图</th>
+            <th>租赁状况</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="car in cars" :key="car.chenum">
+            <td>{{ car.xinxi }}</td>
+            <td>{{ car.price }} 元/天</td>
+            <td><img :src="car.pictureUrl" alt="预览图" style="width: 200px; height: auto;"></td>
+            <td>{{car.iszl ? '已租赁' : '未租赁'}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-if="currentView === 'rentals'">
+        <h2>租赁订单管理</h2>
+        <table class="car-table">
+          <thead>
+          <tr>
+            <th>订单ID</th>
+            <th>车辆编号</th>
+            <th>用户邮箱</th>
+            <th>开始时间</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="rental in rentals" :key="rental.id">
+            <td>{{ rental.id }}</td>
+            <td>{{ rental.chenum }}</td>
+            <td>{{ rental.email }}</td>
+            <td>{{ new Date(rental.starttime).toLocaleString() }}</td>
+            <td><button @click="deleteRental(rental)">删除订单</button></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 引入 Vue.js 和 Axios -->
+<script src="./js/vue/vue.js"></script>
+<script src="./js/axios/axios.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      admin: {
+        avatarUrl: './imgs/admin.png',
+        username: '管理员',
+        loggedIn: true
+      },
+      cars: [],
+      rentals: [],
+      currentView: 'cars',
+      newCar: {
+        model: '',
+        price: ''
+      }
+    },
+    mounted() {
+      this.fetchCarInfo();
+      this.fetchRentals();
+    },
+    methods: {
+      fetchCarInfo() {
+        axios.get('/springmvcdemo/carsA.do')
+                .then(response => {
+                  this.cars = response.data;
+                })
+                .catch(error => {
+                  console.error('Error fetching car info:', error);
+                });
+      },
+      fetchRentals() {
+        axios.get('/springmvcdemo/rentals.do')
+                .then(response => {
+                  this.rentals = response.data;
+                })
+                .catch(error => {
+                  console.error('Error fetching rentals:', error);
+                });
+      },
+      addCar() {
+        const carData = {
+          chenum:null,
+          xinxi: this.newCar.model,
+          price: this.newCar.price,
+          iszl:0,
+          ['pictureUrl']: "./imgs/" + this.newCar.model + ".png"
+        };
+        axios.post('/springmvcdemo/caradd.do', carData)
+                .then(response => {
+                  alert('车辆添加成功');
+                  this.fetchCarInfo();
+                  this.newCar.model = '';
+                  this.newCar.price = '';
+                })
+                .catch(error => {
+                  console.error('Error adding car:', error);
+                  alert('添加车辆失败，请稍后再试');
+                });
+      },
+      deleteRental(rental) {
+        axios.post(`/springmvcdemo/rentald.do`,rental,{headers: {
+            'Content-Type': 'application/json'
+          }})
+                .then(response => {
+                  alert('订单删除成功');
+                  this.fetchRentals();
+                })
+                .catch(error => {
+                  console.error('Error deleting rental:', error);
+                  alert('删除订单失败，请稍后再试');
+                });
+      }
+    }
+  });
+</script>
+</body>
+</html>
